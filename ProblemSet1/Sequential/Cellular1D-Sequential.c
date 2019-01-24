@@ -111,6 +111,15 @@ int getCellInfo(int *cells) {
     return 0;
 }
 
+void printArray(int *arr, int size) {
+    for(size_t i = 0; i < size; i++)
+    {
+        printf("%d", arr[i]);
+    }
+    printf("\n");
+    
+}
+
 void runIterations(int i, int *lookupTable, const int lookupSize, int *cells, const int cellsSize, int saveToFile) {
     if (cellsSize < 3) {
         return;
@@ -118,8 +127,11 @@ void runIterations(int i, int *lookupTable, const int lookupSize, int *cells, co
     const int historySize = i;
     const int historyCellsSize = cellsSize;
     int history[60][3];
+    int numOfIt = i;
 
     for(; i>0; i--) {
+        printf("t = %d: ", numOfIt-i);
+        printArray(cells, cellsSize);
         int firstVal = cells[0];
         int leftVal = cells[cellsSize-1];
         int rightVal = cells[0];
@@ -137,6 +149,8 @@ void runIterations(int i, int *lookupTable, const int lookupSize, int *cells, co
             }
         }
     }
+    printf("t = %d:", numOfIt-i);
+    printArray(cells, cellsSize);
 }
 
 void main()
@@ -147,11 +161,8 @@ void main()
 
     makeLookupTable(lookuptable);
     getCellInfo(cells);
-    runIterations(2, lookuptable, sizeof(lookuptable)/sizeof(lookuptable[0]), cells, sizeof(cells)/sizeof(cells[0]), 1);
+    runIterations(10, lookuptable, sizeof(lookuptable)/sizeof(lookuptable[0]), cells, sizeof(cells)/sizeof(cells[0]), 1);
 
     int val = f(lookuptable, 0,0,1);
-    for(size_t i = 0; i < sizeof(cells)/sizeof(cells[0]); i++)
-    {
-        printf("%d\n", cells[i]);
-    }   
+    printArray(lookuptable, 8);
 }
