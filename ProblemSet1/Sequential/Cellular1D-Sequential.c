@@ -4,30 +4,9 @@
 #include <assert.h>
 #define MAXCHAR 1000
 
-int f(int c1, int c2, int c3){
-    
-    
-    switch (c1*100 + c2*10 + c3)
-    {
-        case 0:
-            return 0;
-        case 1:
-            return 1;
-        case 10:
-            return 1;
-        case 11:
-            return 0;
-        case 100:
-            return 1;
-        case 101:
-            return 0;
-        case 110:
-            return 1;
-        case 111:
-            return 1;
-        default:
-            break;
-    }
+int f(int *lookupTable, int c1, int c2, int c3){
+    int index = c1*2^2 + c2*2 + c3;
+    return lookupTable[index];
 }
 
 char** str_split(char* a_str, const char a_delim)
@@ -81,7 +60,7 @@ char** str_split(char* a_str, const char a_delim)
 int makeLookupTable(int *lookupTable){
     FILE *fp;
     char str[MAXCHAR];
-    char* filename = ".\\mod2.txt";
+    char* filename = "..\\mod2.txt";
  
     fp = fopen(filename, "r");
     if (fp == NULL){
@@ -90,11 +69,9 @@ int makeLookupTable(int *lookupTable){
     }
     int i = 0;
     while (fgets(str, MAXCHAR, fp) != NULL) {
-        printf("%s", str);
         char** split = str_split(str, ' ');
-
         if (*(split+1)) {
-            if (strcmp("1", *(split+1)) == 0)
+            if (strcmp("1\n", *(split+1)) == 0)
             {
                 lookupTable[i] = 1;
             } 
@@ -110,14 +87,58 @@ int makeLookupTable(int *lookupTable){
     return 0;
 }
 
+int getCellInfo(int *cells) {
+        FILE *fp;
+    char str[MAXCHAR];
+    char* filename = "..\\middle30.txt";
+ 
+    fp = fopen(filename, "r");
+    if (fp == NULL){
+        printf("Could not open file %s",filename);
+        return 1;
+    }
+    int i = 0;
+    while (fgets(str, 2, fp) != NULL) {
+        if (strcmp("1", str) == 0) {
+            cells[i] = 1;
+            i++;
+        } else if (strcmp("0", str) == 0) {
+            cells[i] = 0;
+            i++;
+        }
+    }
+    fclose(fp);
+    return 0;
+}
+
+void runIterations(int i, int *lookupTable, int *cells) {
+    int origincells[sizeof(cells)/sizeof(cells[0])];
+    
+    for(size_t j = 0; j < sizeof(cells)/sizeof(cells[0]); j++)
+    {
+        origincells[j] = cells[j];
+    }
+
+    for(size_t j = 0; j < sizeof(cells)/sizeof(cells[0]); j++)
+    {
+        origincells[j] = cells[j];
+    }
+    
+}
+
 void main()
 {
     int bstr[6] = {1, 1, 1, 0, 0, 1};
     int lookuptable[8];
-
-
+    int cells[60];
 
     makeLookupTable(lookuptable);
+    getCellInfo(cells);
+    runIterations(1, lookuptable, cells);
+
     int val = f(lookuptable, 0,0,1);
-    printf("%d", lookuptable[2]);
+    for(size_t i = 0; i < sizeof(cells)/sizeof(cells[0]); i++)
+    {
+        printf("%d\n", cells[i]);
+    }   
 }
