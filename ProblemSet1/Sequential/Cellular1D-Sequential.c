@@ -111,30 +111,44 @@ int getCellInfo(int *cells) {
     return 0;
 }
 
-void runIterations(int i, int *lookupTable, int *cells) {
-    int origincells[sizeof(cells)/sizeof(cells[0])];
-    
-    for(size_t j = 0; j < sizeof(cells)/sizeof(cells[0]); j++)
-    {
-        origincells[j] = cells[j];
+void runIterations(int i, int *lookupTable, int lookupSize, int *cells, int cellsSize) {
+    if (cellsSize < 3) {
+        return;
     }
-
-    for(size_t j = 0; j < sizeof(cells)/sizeof(cells[0]); j++)
+    
+    int firstVal = cells[0];
+    int leftVal = cells[cellsSize-1];
+    int rightVal = cells[0];
+    for(size_t j = 0; j < cellsSize; j++)
     {
-        origincells[j] = cells[j];
+        int middle = cells[j];
+        printf("%d, %d, %d\n", leftVal, middle, rightVal);
+        cells[j] = f(lookupTable, leftVal, middle, rightVal);
+        leftVal = middle;
+        if (j+1 == cellsSize-1) {
+            rightVal = firstVal;
+        } 
+        else
+        {
+            rightVal = cells[j+2];
+        }
+    }
+    
+    if (i > 1) {
+        runIterations(i-1, lookupTable, lookupSize, cells, cellsSize);
     }
     
 }
 
 void main()
 {
-    int bstr[6] = {1, 1, 1, 0, 0, 1};
+    int bstr[6] = {1, 1, 1, 1, 1, 1};
     int lookuptable[8];
     int cells[60];
 
     makeLookupTable(lookuptable);
     getCellInfo(cells);
-    runIterations(1, lookuptable, cells);
+    runIterations(2, lookuptable, sizeof(lookuptable)/sizeof(lookuptable[0]), cells, sizeof(cells)/sizeof(cells[0]));
 
     int val = f(lookuptable, 0,0,1);
     for(size_t i = 0; i < sizeof(cells)/sizeof(cells[0]); i++)
