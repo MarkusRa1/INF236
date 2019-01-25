@@ -12,6 +12,7 @@ int makeLookupTable(int *lookupTable);
 int getCellInfo(int *cells);
 void printArray(int *arr, int size);
 void runIterations(int i, int *lookupTable, const int lookupSize, int *cells, const int cellsSize, int saveToFile);
+void writeToFile(char *fileName, int history[CELLSSIZE][NUMIT+1], int h, int w);
 
 void main()
 {
@@ -28,12 +29,6 @@ void main()
 int f(int *lookupTable, int c1, int c2, int c3)
 {
     int index = c1 * 2 * 2 + c2 * 2 + c3;
-
-    if (c3 == 1)
-    {
-        int val = lookupTable[index];
-        //printf("%d", val);
-    }
     return lookupTable[index];
 }
 
@@ -165,7 +160,7 @@ void runIterations(int i, int *lookupTable, const int lookupSize, int *cells, co
     }
     const int historySize = i;
     const int historyCellsSize = cellsSize;
-    int history[CELLSSIZE][NUMIT];
+    int history[CELLSSIZE][NUMIT+1];
     int numOfIt = i;
 
     for (; i > 0; i--)
@@ -178,6 +173,7 @@ void runIterations(int i, int *lookupTable, const int lookupSize, int *cells, co
         for (size_t j = 0; j < cellsSize; j++)
         {
             int middle = cells[j];
+            history[j][NUMIT-i] = middle;
             cells[j] = f(lookupTable, leftVal, middle, rightVal);
             leftVal = middle;
             if (j + 1 == cellsSize - 1)
@@ -190,6 +186,27 @@ void runIterations(int i, int *lookupTable, const int lookupSize, int *cells, co
             }
         }
     }
-    printf("t = %d:", numOfIt - i);
+    for(size_t k = 0; k < cellsSize; k++)
+    {
+        history[k][NUMIT] = cells[k];
+    }
+    
+    printf("t = %d: ", numOfIt - i);
     printArray(cells, cellsSize);
+    writeToFile("data.csv", history, CELLSSIZE, NUMIT+1);
+}
+
+void writeToFile(char *fileName, int history[CELLSSIZE][NUMIT+1], int w, int h) {
+    FILE *fp;
+    fp = fopen("..\\Plot\\data.csv", "w+");
+
+    for(size_t i = 0; i < h; i++)
+    {
+        for(size_t j = 0; j+1 < w; j++)
+        {
+            fprintf(fp, "%d,", history[j][i]);
+        }
+        fprintf(fp, "%d\n", history[w-1][i]);
+    }
+    fclose(fp);
 }
