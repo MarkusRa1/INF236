@@ -187,7 +187,7 @@ void runIterations(int numOfIt, int *lookupTable, const int lookupSize, int *cel
 
     for (size_t i = 0; i < numOfIt; i++)
     {
-        printf("t = %d: ", i);
+        printf("t = %zu: ", i);
         printArray(cells, cellsSize);
         int firstVal = cells[0];
         int leftVal = cells[cellsSize - 1];
