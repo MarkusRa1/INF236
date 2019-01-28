@@ -34,7 +34,7 @@ void main()
     fprintf(pgmimg, "%d %d\n", width, height);  
   
     // Writing the maximum gray value 
-    fprintf(pgmimg, "255\n");  
+    fprintf(pgmimg, "1\n");  
     int count = 0; 
     for (i = 0; i < height; i++) { 
         for (j = 0; j < width; j++) { 

@@ -3,27 +3,36 @@
 #include <string.h>
 #include <assert.h>
 #define MAXCHAR 1000
-#define NUMIT 20
-#define CELLSSIZE 60
 
 int f(int *lookupTable, int c1, int c2, int c3);
 char **str_split(char *a_str, const char a_delim);
-int makeLookupTable(int *lookupTable);
-int getCellInfo(int *cells);
+int makeLookupTable(int *lookupTable, char *filename);
+int getCellInfo(int **cells, char *filename);
 void printArray(int *arr, int size);
 void runIterations(int i, int *lookupTable, const int lookupSize, int *cells, const int cellsSize, int saveToFile);
-void writeToFile(char *fileName, int history[CELLSSIZE][NUMIT+1], int h, int w);
+void writeToFile(char *fileName, int *history, int h, int w);
 
-void main()
+int main(int argc, char *argv[])
 {
+    char *rulename = "mod2.txt";
+    char *initname = "middle30.txt";
+    int numOfIt = 100;
+    if (argc == 4)
+    {
+        rulename = argv[1];
+        initname = argv[2];
+        numOfIt = atoi(argv[3]);
+    }
+
     int lookuptable[8];
-    int cells[CELLSSIZE];
+    int *cells;
 
-    makeLookupTable(lookuptable);
-    getCellInfo(cells);
-    runIterations(NUMIT, lookuptable, sizeof(lookuptable) / sizeof(lookuptable[0]), cells, sizeof(cells) / sizeof(cells[0]), 1);
-
+    makeLookupTable(lookuptable, rulename);
+    size_t cellsSize = getCellInfo(&cells, initname);
+    runIterations(numOfIt, lookuptable, sizeof(lookuptable) / sizeof(lookuptable[0]), cells, cellsSize, 1);
+    free(cells);
     printArray(lookuptable, 8);
+    return 0;
 }
 
 int f(int *lookupTable, int c1, int c2, int c3)
@@ -80,13 +89,17 @@ char **str_split(char *a_str, const char a_delim)
     return result;
 }
 
-int makeLookupTable(int *lookupTable)
+int makeLookupTable(int *lookupTable, char *filename)
 {
     FILE *fp;
     char str[MAXCHAR];
-    char *filename = "..\\mod2.txt";
+    char *relpath = "..\\";
+    char *path;
+    path = calloc(1, strlen(relpath) + strlen(filename));
+    strcat(path, relpath);
+    strcat(path, filename);
 
-    fp = fopen(filename, "r");
+    fp = fopen(path, "r");
     if (fp == NULL)
     {
         printf("Could not open file %s", filename);
@@ -113,34 +126,46 @@ int makeLookupTable(int *lookupTable)
     return 0;
 }
 
-int getCellInfo(int *cells)
+int getCellInfo(int **cells, char *filename)
 {
     FILE *fp;
     char str[MAXCHAR];
-    char *filename = "..\\middle30.txt";
+    char *path;
+    path = calloc(1, strlen("..\\") + strlen(filename));
+    strcat(path, "..\\");
+    strcat(path, filename);
+    size_t size = 0;
 
-    fp = fopen(filename, "r");
+    fp = fopen(path, "r");
     if (fp == NULL)
     {
         printf("Could not open file %s", filename);
         return 1;
     }
     int i = 0;
-    while (fgets(str, 2, fp) != NULL)
+    while (fgets(str, MAXCHAR, fp) != NULL)
     {
-        if (strcmp("1", str) == 0)
+        for(size_t j = 0; j < strlen(str); j++)
         {
-            cells[i] = 1;
-            i++;
+            if ('1' == str[j] || '0' == str[j])
+                size++;
         }
-        else if (strcmp("0", str) == 0)
+        
+        *cells = malloc(strlen(str) * sizeof(cells[0]));
+        for (size_t j = 0; j < strlen(str); j++)
         {
-            cells[i] = 0;
-            i++;
+            if ('1' == str[j])
+            {
+                (*cells)[i] = 1; i++;
+            }
+            else if ('0' == str[j])
+            {
+                (*cells)[i] = 0; i++;
+            }
         }
     }
     fclose(fp);
-    return 0;
+    return size;
 }
 
 void printArray(int *arr, int size)
@@ -152,20 +177,17 @@ void printArray(int *arr, int size)
     printf("\n");
 }
 
-void runIterations(int i, int *lookupTable, const int lookupSize, int *cells, const int cellsSize, int saveToFile)
+void runIterations(int numOfIt, int *lookupTable, const int lookupSize, int *cells, const int cellsSize, int saveToFile)
 {
     if (cellsSize < 3)
     {
         return;
     }
-    const int historySize = i;
-    const int historyCellsSize = cellsSize;
-    int history[CELLSSIZE][NUMIT+1];
-    int numOfIt = i;
+    int *history = (int *)malloc(cellsSize * (numOfIt+1) * sizeof(int));
 
-    for (; i > 0; i--)
+    for (size_t i = 0; i < numOfIt; i++)
     {
-        printf("t = %d: ", numOfIt - i);
+        printf("t = %d: ", i);
         printArray(cells, cellsSize);
         int firstVal = cells[0];
         int leftVal = cells[cellsSize - 1];
@@ -173,7 +195,8 @@ void runIterations(int i, int *lookupTable, const int lookupSize, int *cells, co
         for (size_t j = 0; j < cellsSize; j++)
         {
             int middle = cells[j];
-            history[j][NUMIT-i] = middle;
+            int index = i*cellsSize + j;
+            *(history + i*cellsSize + j) = middle;
             cells[j] = f(lookupTable, leftVal, middle, rightVal);
             leftVal = middle;
             if (j + 1 == cellsSize - 1)
@@ -186,27 +209,30 @@ void runIterations(int i, int *lookupTable, const int lookupSize, int *cells, co
             }
         }
     }
-    for(size_t k = 0; k < cellsSize; k++)
+    for (size_t k = 0; k < cellsSize; k++)
     {
-        history[k][NUMIT] = cells[k];
+        *(history + numOfIt*cellsSize + k) = cells[k];
     }
-    
-    printf("t = %d: ", numOfIt - i);
+
+    printf("t = %d: ", numOfIt);
     printArray(cells, cellsSize);
-    writeToFile("data.csv", history, CELLSSIZE, NUMIT+1);
+    writeToFile("data.csv", history, cellsSize, numOfIt + 1);
 }
 
-void writeToFile(char *fileName, int history[CELLSSIZE][NUMIT+1], int w, int h) {
+void writeToFile(char *fileName, int *history, int w, int h)
+{
     FILE *fp;
     fp = fopen("..\\Plot\\data.csv", "w+");
 
-    for(size_t i = 0; i < h; i++)
+    for (size_t i = 0; i < h; i++)
     {
-        for(size_t j = 0; j+1 < w; j++)
+        for (size_t j = 0; j + 1 < w; j++)
         {
-            fprintf(fp, "%d,", history[j][i]);
+            // printf("%d,", *(history + i*h + j));
+            fprintf(fp, "%d,", *(history + i*w + j));
         }
-        fprintf(fp, "%d\n", history[w-1][i]);
+        // printf("%d\n", *(history + i*h + w-1));
+        fprintf(fp, "%d\n", *(history + i*w + w-1));
     }
     fclose(fp);
 }
