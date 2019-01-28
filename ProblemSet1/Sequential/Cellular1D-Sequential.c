@@ -93,7 +93,7 @@ int makeLookupTable(int *lookupTable, char *filename)
 {
     FILE *fp;
     char str[MAXCHAR];
-    char *relpath = "..\\";
+    char *relpath = "../";
     char *path;
     path = calloc(1, strlen(relpath) + strlen(filename));
     strcat(path, relpath);
@@ -131,8 +131,8 @@ int getCellInfo(int **cells, char *filename)
     FILE *fp;
     char str[MAXCHAR];
     char *path;
-    path = calloc(1, strlen("..\\") + strlen(filename));
-    strcat(path, "..\\");
+    path = calloc(1, strlen("../") + strlen(filename));
+    strcat(path, "../");
     strcat(path, filename);
     size_t size = 0;
 
@@ -222,7 +222,7 @@ void runIterations(int numOfIt, int *lookupTable, const int lookupSize, int *cel
 void writeToFile(char *fileName, int *history, int w, int h)
 {
     FILE *fp;
-    fp = fopen("..\\Plot\\data.csv", "w+");
+    fp = fopen("../Plot/data.csv", "w+");
 
     for (size_t i = 0; i < h; i++)
     {
