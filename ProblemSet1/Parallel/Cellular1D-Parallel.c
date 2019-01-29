@@ -1,6 +1,6 @@
-#include < mpi .h > // Header defining MPI functions
-#include < stdio .h >
-#include < string .h >
+#include <mpi.h> // Header defining MPI functions
+#include <stdio.h>
+#include <string.h>
 int main(int argc, char **argv)
 {
     int comm_sz;            /* Number of processes */
