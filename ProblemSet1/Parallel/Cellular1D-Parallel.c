@@ -3,8 +3,8 @@
 #include <string.h>
 int main(int argc, char **argv)
 {
-    int comm_sz = 10;            /* Number of processes */
-    int my_rank = 0;            /* My process rank */
+    int comm_sz;            /* Number of processes */
+    int my_rank;            /* My process rank */
     MPI_Init(&argc, &argv); // No MPI function before this call
     MPI_Comm_size(MPI_COMM_WORLD, &comm_sz);
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
