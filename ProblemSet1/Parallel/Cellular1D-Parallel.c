@@ -3,32 +3,30 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-#include <unistd.h>
 #define MAXCHAR 1000
 
 int makeLookupTable(int *lookupTable, char *filename);
 int getCellInfo(int **cells, char *filename);
 char **str_split(char *a_str, const char a_delim);
+void printArray(int *arr, int size);
 
 int main(int argc, char **argv)
 {
-    int comm_sz;            /* Number of processes */
-    int my_rank;            /* My process rank */
+    int comm_sz; /* Number of processes */
+    int my_rank; /* My process rank */
+
     MPI_Init(&argc, &argv); // No MPI function before this call
     MPI_Comm_size(MPI_COMM_WORLD, &comm_sz);
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+
     int lookuptable[8];
     int neighbourcells[3];
     int *cells;
-    if (my_rank != 0)
-    {
-        int *test;
-        int what = 11*sizeof(int);
-        MPI_Recv(test, what, MPI_INT, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        printf("rank %d: %d, %d\n", my_rank, test[0], test[1]);
-        
-    }
-    else
+    int *sendcount = malloc(comm_sz * sizeof(int));
+    int *displays = malloc(comm_sz * sizeof(int));
+    int cellsSize;
+
+    if (my_rank == 0)
     {
         printf("rank 0\n");
         char *rulename = "mod2.txt";
@@ -40,23 +38,40 @@ int main(int argc, char **argv)
             initname = argv[2];
             numOfIt = atoi(argv[3]);
         }
-        makeLookupTable(lookuptable, rulename);
-        size_t cellsSize = getCellInfo(&cells, initname);
-        printf("read files done\n");
-        //cellsPerProc = cellsSize / comm_sz;
-        int msg[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-        for(int i = 1; i < comm_sz; i++)
+        cellsSize = (int)getCellInfo(&cells, initname);
+        int cellsPerProc = cellsSize / comm_sz;
+        int rest = cellsSize - cellsPerProc*comm_sz;
+        printf("sz, per, rest: %d, %d, %d\n", cellsSize, cellsPerProc, rest);
+        for (size_t i = 0; i < comm_sz; i++)
         {
-            MPI_Send(&msg, 10*sizeof(int), MPI_INT, i, 1, MPI_COMM_WORLD);
+            if (rest > 0)
+            {
+                sendcount[i] = cellsPerProc + 1;
+                rest--;
+            }
+            else
+            {
+                sendcount[i] = cellsPerProc;
+            }
         }
-
+        makeLookupTable(lookuptable, rulename);
         // MPI_Scatter to split an array evenly
         // Assume that it breaks up evenly
         // Gather something something
         // Exercise 2 same thing?
-        
     }
-    // Code
+
+    MPI_Bcast(lookuptable, 8, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(sendcount, comm_sz, MPI_INT, 0, MPI_COMM_WORLD);
+
+    for(size_t i = 0; i < comm_sz; i++)
+    {
+        displays[i] = 0;
+    }
+    
+    int *recvarr = malloc(sendcount[my_rank] * sizeof(int));
+    MPI_Scatterv(cells, sendcount, displays, MPI_INT, &recvarr[0], sendcount[my_rank]+1, MPI_INT, 0, MPI_COMM_WORLD);
+
     MPI_Finalize(); // No MPI function after this call
     return 0;
 }
@@ -188,4 +203,13 @@ char **str_split(char *a_str, const char a_delim)
     }
 
     return result;
+}
+
+void printArray(int *arr, int size)
+{
+    for (size_t i = 0; i < size; i++)
+    {
+        printf("%d", arr[i]);
+    }
+    printf("\n");
 }
