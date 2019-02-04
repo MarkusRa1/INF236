@@ -9,6 +9,11 @@ int makeLookupTable(int *lookupTable, char *filename);
 int getCellInfo(int **cells, char *filename);
 char **str_split(char *a_str, const char a_delim);
 void printArray(int *arr, int size);
+void runIterations(int numOfIt, int *lookupTable, const int lookupSize, int *history, const int cellsSize, int my_rank, int comm_sz);
+int f(int *lookupTable, int c1, int c2, int c3);
+void writeToFile(char *fileName, int *history, int w, int h);
+int mod(int x, int m);
+void printMatrix(int *mat, int w, int h);
 
 int main(int argc, char **argv)
 {
@@ -19,29 +24,30 @@ int main(int argc, char **argv)
     MPI_Comm_size(MPI_COMM_WORLD, &comm_sz);
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 
-    int lookuptable[8];
+    int *lookuptable = malloc(8 * sizeof(int));
     int neighbourcells[3];
     int *cells;
     int *sendcount = malloc(comm_sz * sizeof(int));
     int *displays = malloc(comm_sz * sizeof(int));
     int cellsSize;
+    char *rulename = "mod2.txt";
+    char *initname = "middle30.txt";
+    int numOfIt = 100;
+    if (argc == 4)
+    {
+        rulename = argv[1];
+        initname = argv[2];
+        numOfIt = atoi(argv[3]);
+    }
 
     if (my_rank == 0)
     {
-        printf("rank 0\n");
-        char *rulename = "mod2.txt";
-        char *initname = "middle30.txt";
-        int numOfIt = 100;
-        if (argc == 4)
-        {
-            rulename = argv[1];
-            initname = argv[2];
-            numOfIt = atoi(argv[3]);
-        }
+        // printf("rank 0\n");
         cellsSize = (int)getCellInfo(&cells, initname);
         int cellsPerProc = cellsSize / comm_sz;
-        int rest = cellsSize - cellsPerProc*comm_sz;
-        printf("sz, per, rest: %d, %d, %d\n", cellsSize, cellsPerProc, rest);
+        int rest = cellsSize - cellsPerProc * comm_sz;
+        // printf("hello\n");
+        //printf("sz, per, rest: %d, %d, %d\n", cellsSize, cellsPerProc, rest);
         for (size_t i = 0; i < comm_sz; i++)
         {
             if (rest > 0)
@@ -63,16 +69,48 @@ int main(int argc, char **argv)
 
     MPI_Bcast(lookuptable, 8, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Bcast(sendcount, comm_sz, MPI_INT, 0, MPI_COMM_WORLD);
-
-    for(size_t i = 0; i < comm_sz; i++)
+    int sum = 0;
+    for (size_t i = 0; i < comm_sz; i++)
     {
-        displays[i] = 0;
+        displays[i] = sum;
+        sum += sendcount[i];
+    }
+
+    int myCellsSize = sendcount[my_rank];
+    int *recvarr = malloc(myCellsSize * sizeof(int));
+
+    MPI_Scatterv(cells, sendcount, displays, MPI_INT, &recvarr[0], myCellsSize + 1, MPI_INT, 0, MPI_COMM_WORLD);
+    // free(sendcount);
+    // free(displays);
+    int *history = (int *)malloc(myCellsSize * (numOfIt+1) * sizeof(int));
+    for (size_t i = 0; i < myCellsSize; i++)
+    {
+        *(history + i) = recvarr[i];
+    }
+    // free(sendcount);
+    runIterations(numOfIt, lookuptable, 8, history, myCellsSize, my_rank, comm_sz);
+    // int **historymat;
+    int *historyall;
+    int *rbuf;
+    if (my_rank == 0) {
+        rbuf = (int *)malloc(cellsSize * sizeof(int));
+        // historymat = (int **)malloc((numOfIt+1)*sizeof(int));
+        historyall = (int *)malloc(cellsSize*(numOfIt+1)*sizeof(int));
+        // for (int i = 0; i < numOfIt+1; i++)
+            // historymat[i] = & (historyall[i * myCellsSize]);
     }
     
-    int *recvarr = malloc(sendcount[my_rank] * sizeof(int));
-    MPI_Scatterv(cells, sendcount, displays, MPI_INT, &recvarr[0], sendcount[my_rank]+1, MPI_INT, 0, MPI_COMM_WORLD);
-
+    for(size_t i = 0; i < numOfIt+1; i++)
+    {
+        MPI_Gatherv(history + i*myCellsSize, sendcount[my_rank], MPI_INT, historyall + i*cellsSize, sendcount, displays, MPI_INT, 0, MPI_COMM_WORLD);
+    }
     MPI_Finalize(); // No MPI function after this call
+    if (my_rank == 0) {
+        printf("%d\n", *(history+30));
+        printMatrix(historyall, cellsSize, numOfIt + 1);
+        writeToFile("de", historyall, cellsSize, numOfIt + 1);
+    }
+    // free(history);
     return 0;
 }
 
@@ -82,7 +120,7 @@ int makeLookupTable(int *lookupTable, char *filename)
     char str[MAXCHAR];
     char *relpath = "../";
     char *path;
-    path = calloc(1, strlen(relpath) + strlen(filename));
+    path = calloc(1, strlen(relpath) + strlen(filename) + 1);
     strcat(path, relpath);
     strcat(path, filename);
 
@@ -100,11 +138,11 @@ int makeLookupTable(int *lookupTable, char *filename)
         {
             if (strcmp("1\n", *(split + 1)) == 0)
             {
-                lookupTable[i] = 1;
+                *(lookupTable + i) = 1;
             }
             else
             {
-                lookupTable[i] = 0;
+                *(lookupTable + i) = 0;
             }
             i++;
         }
@@ -117,9 +155,9 @@ int getCellInfo(int **cells, char *filename)
 {
     FILE *fp;
     char str[MAXCHAR];
-    char *path;
-    path = calloc(1, strlen("../") + strlen(filename));
-    strcat(path, "../");
+    char *p = "../";
+    char *path = calloc(1, strlen(p) + strlen(filename) + 1);
+    strcat(path, p);
     strcat(path, filename);
     size_t size = 0;
 
@@ -155,6 +193,98 @@ int getCellInfo(int **cells, char *filename)
     }
     fclose(fp);
     return size;
+}
+
+int mod(int x, int m) {
+    return (x%m + m)%m;
+}
+
+void runIterations(int numOfIt, int *lookupTable, int lookupSize, int *history, int cellsSize, int my_rank, int comm_sz)
+{
+    int rightneig = mod(my_rank + 1, comm_sz);
+    int leftneig = mod(my_rank - 1, comm_sz);
+    // printf("left right: %d %d %d\n", leftneig, rightneig, comm_sz);
+    // printf("t = %d: ", 0);
+    // printArray(history, cellsSize);
+    int sz = (numOfIt+1) * cellsSize;
+    int leftVal;
+    int rightVal;
+    for (int i = 0; i < numOfIt; i++)
+    {
+        if (comm_sz > 1)
+        {
+            if (mod(my_rank, 2) == 0)
+            {
+                // printf("%d send to %d\n", my_rank, rightneig);
+                MPI_Send(history + i * cellsSize + cellsSize - 1, 1, MPI_INT, rightneig, 1, MPI_COMM_WORLD);
+                MPI_Recv(&rightVal, 1, MPI_INT, rightneig, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                // printf("%d send to %d\n", my_rank, leftneig);
+                MPI_Send(history + i * cellsSize, 1, MPI_INT, leftneig, 1, MPI_COMM_WORLD);
+                MPI_Recv(&leftVal, 1, MPI_INT, leftneig, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            }
+            else
+            {
+                // printf("%d recv from %d\n", my_rank, leftneig);
+                MPI_Recv(&leftVal, 1, MPI_INT, leftneig, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                MPI_Send(history + i * cellsSize, 1, MPI_INT, leftneig, 1, MPI_COMM_WORLD);
+                // printf("%d recv from %d\n", my_rank, rightneig);
+                MPI_Recv(&rightVal, 1, MPI_INT, rightneig, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                MPI_Send(history + i * cellsSize + cellsSize - 1, 1, MPI_INT, rightneig, 1, MPI_COMM_WORLD);
+            }
+            // printf("P%d done %d, got %d and %d\n", my_rank, i, leftVal, rightVal);
+        } else
+        {
+            leftVal = *(history + i * cellsSize + cellsSize - 1);
+            rightVal = *(history + i * cellsSize);
+        }
+        
+        for (size_t j = 0; j < cellsSize; j++)
+        {
+            if (j == 0)
+            {
+                *(history + (i + 1) * cellsSize + j) = f(lookupTable, leftVal, *(history + i * cellsSize),
+                                                   *(history + i * cellsSize + 1));
+            }
+            else if (j == cellsSize - 1)
+            {
+                *(history + (i + 1) * cellsSize + j) = f(lookupTable, *(history + i * cellsSize + j - 1),
+                                                   *(history + i * cellsSize + j), rightVal);
+                // printf("%d vs %d\n",(int) j, sz);
+            }
+            else
+            {
+                *(history + (i + 1) * cellsSize + j) = f(lookupTable, *(history + i * cellsSize + j - 1),
+                                                   *(history + i * cellsSize + j), *(history + i * cellsSize + j + 1));
+            }
+        }
+    }
+    // printf("done\n");
+}
+
+int f(int *lookuptable, int c1, int c2, int c3)
+{
+    // printf("%d, %d, %d.\n", c1, c2, c3);
+    int index = c1 * 2 * 2 + c2 * 2 + c3;
+    // printf("%d Lookup 0,1,2,3: %d,%d,%d,%d\n", index, *lookuptable, *(lookuptable + 1), *(lookuptable + 2), *(lookuptable + 3));
+    return *(lookuptable + index);
+}
+
+void writeToFile(char *fileName, int *history, int w, int h)
+{
+    FILE *fp;
+    fp = fopen("../Plot/data.csv", "w+");
+
+    for (size_t i = 0; i < h; i++)
+    {
+        for (size_t j = 0; j + 1 < w; j++)
+        {
+            // printf("%d,", *(history + i*h + j));
+            fprintf(fp, "%d,", *(history + i*w + j));
+        }
+        // printf("%d\n", *(history + i*h + w-1));
+        fprintf(fp, "%d\n", *(history + i*w + w-1));
+    }
+    fclose(fp);
 }
 
 char **str_split(char *a_str, const char a_delim)
@@ -212,4 +342,12 @@ void printArray(int *arr, int size)
         printf("%d", arr[i]);
     }
     printf("\n");
+}
+
+void printMatrix(int *mat, int w, int h) {
+    for(int i = 0; i < h; i++)
+    {
+        printf("t = %3d: ", i);
+        printArray(mat+i*w, w);
+    }
 }
