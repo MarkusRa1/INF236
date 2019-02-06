@@ -37,8 +37,16 @@ int main(int argc, char *argv[])
 
 int f(int *lookupTable, int c1, int c2, int c3)
 {
-    int index = c1 * 2 * 2 + c2 * 2 + c3;
-    return lookupTable[index];
+    if ((c1 != 1 && c1 != 0) || (c2 != 1 && c2 != 0) || (c3 != 1 && c3 != 0))
+    {
+        printf("weird values: %d, %d, %d\n", c1, c2, c3);
+        return 0;
+    }
+    else
+    {
+        int index = c1 * 2 * 2 + c2 * 2 + c3;
+        return lookupTable[index];
+    }
 }
 
 char **str_split(char *a_str, const char a_delim)
@@ -143,24 +151,43 @@ int getCellInfo(int **cells, char *filename)
         return 1;
     }
     int i = 0;
+    int firsttime = 1;
     while (fgets(str, MAXCHAR, fp) != NULL)
     {
-        for(size_t j = 0; j < strlen(str); j++)
+        for (size_t j = 0; j < strlen(str); j++)
         {
             if ('1' == str[j] || '0' == str[j])
                 size++;
         }
-        
-        *cells = malloc(strlen(str) * sizeof(cells[0]));
+        if (firsttime)
+        {
+            *cells = malloc(size * sizeof(cells[0]));
+            firsttime = 0;
+        }
+        else
+        {
+            int *tmp = realloc(*cells, size * sizeof(int));
+            if (tmp == NULL)
+            {
+                printf("fak");
+            }
+            else
+            {
+                *cells = tmp;
+            }
+        }
+
         for (size_t j = 0; j < strlen(str); j++)
         {
             if ('1' == str[j])
             {
-                (*cells)[i] = 1; i++;
+                *(*(cells) + i) = 1;
+                i++;
             }
             else if ('0' == str[j])
             {
-                (*cells)[i] = 0; i++;
+                *(*(cells) + i) = 0;
+                i++;
             }
         }
     }
@@ -183,7 +210,7 @@ void runIterations(int numOfIt, int *lookupTable, const int lookupSize, int *cel
     {
         return;
     }
-    int *history = (int *)malloc(cellsSize * (numOfIt+1) * sizeof(int));
+    int *history = (int *)malloc(cellsSize * (numOfIt + 1) * sizeof(int));
 
     for (size_t i = 0; i < numOfIt; i++)
     {
@@ -195,8 +222,8 @@ void runIterations(int numOfIt, int *lookupTable, const int lookupSize, int *cel
         for (size_t j = 0; j < cellsSize; j++)
         {
             int middle = cells[j];
-            int index = i*cellsSize + j;
-            *(history + i*cellsSize + j) = middle;
+            int index = i * cellsSize + j;
+            *(history + i * cellsSize + j) = middle;
             cells[j] = f(lookupTable, leftVal, middle, rightVal);
             leftVal = middle;
             if (j + 1 == cellsSize - 1)
@@ -211,7 +238,7 @@ void runIterations(int numOfIt, int *lookupTable, const int lookupSize, int *cel
     }
     for (size_t k = 0; k < cellsSize; k++)
     {
-        *(history + numOfIt*cellsSize + k) = cells[k];
+        *(history + numOfIt * cellsSize + k) = cells[k];
     }
 
     printf("t = %d: ", numOfIt);
@@ -229,10 +256,10 @@ void writeToFile(char *fileName, int *history, int w, int h)
         for (size_t j = 0; j + 1 < w; j++)
         {
             // printf("%d,", *(history + i*h + j));
-            fprintf(fp, "%d,", *(history + i*w + j));
+            fprintf(fp, "%d,", *(history + i * w + j));
         }
         // printf("%d\n", *(history + i*h + w-1));
-        fprintf(fp, "%d\n", *(history + i*w + w-1));
+        fprintf(fp, "%d\n", *(history + i * w + w - 1));
     }
     fclose(fp);
 }
