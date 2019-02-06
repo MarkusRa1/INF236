@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-#define MAXCHAR 2049
+#define MAXCHAR 1000
 
 int makeLookupTable(int *lookupTable, char *filename);
 int getCellInfo(int **cells, char *filename);
@@ -29,7 +29,7 @@ int main(int argc, char **argv)
     int *sendcount = malloc(comm_sz * sizeof(int));
     int cellsSize;
     char *rulename = "mod2.txt";
-    char *initname = "k11.txt";
+    char *initname = "k10.txt";
     int numOfIt = 100;
     if (argc == 4)
     {
@@ -161,12 +161,14 @@ int getCellInfo(int **cells, char *filename)
         printf("Could not open file %s", filename);
         return 1;
     }
-    int i = 0;
+    
     if (fgets(str, MAXCHAR, fp) != NULL)
     {
         char *end;
         len = atoi(str);
     }
+
+    int i = 0;
     char *binarystr = calloc(1, len+1);
     if (fgets(binarystr, len+1, fp) != NULL)
     {

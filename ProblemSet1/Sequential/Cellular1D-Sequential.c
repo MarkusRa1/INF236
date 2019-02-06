@@ -15,7 +15,7 @@ void writeToFile(char *fileName, int *history, int h, int w);
 int main(int argc, char *argv[])
 {
     char *rulename = "mod2.txt";
-    char *initname = "middle30.txt";
+    char *initname = "k10.txt";
     int numOfIt = 100;
     if (argc == 4)
     {
@@ -31,7 +31,6 @@ int main(int argc, char *argv[])
     size_t cellsSize = getCellInfo(&cells, initname);
     runIterations(numOfIt, lookuptable, sizeof(lookuptable) / sizeof(lookuptable[0]), cells, cellsSize, 1);
     free(cells);
-    printArray(lookuptable, 8);
     return 0;
 }
 
@@ -138,11 +137,12 @@ int getCellInfo(int **cells, char *filename)
 {
     FILE *fp;
     char str[MAXCHAR];
-    char *path;
-    path = calloc(1, strlen("../") + strlen(filename));
-    strcat(path, "../");
+    char *p = "../";
+    char *path = calloc(1, strlen(p) + strlen(filename) + 1);
+    strcat(path, p);
     strcat(path, filename);
-    size_t size = 0;
+    int size = 0;
+    int len = 0;
 
     fp = fopen(path, "r");
     if (fp == NULL)
@@ -150,41 +150,33 @@ int getCellInfo(int **cells, char *filename)
         printf("Could not open file %s", filename);
         return 1;
     }
-    int i = 0;
-    int firsttime = 1;
-    while (fgets(str, MAXCHAR, fp) != NULL)
+    
+    if (fgets(str, MAXCHAR, fp) != NULL)
     {
-        for (size_t j = 0; j < strlen(str); j++)
+        char *end;
+        len = atoi(str);
+    }
+    
+    int i = 0;
+    char *binarystr = calloc(1, len+1);
+    if (fgets(binarystr, len+1, fp) != NULL)
+    {
+        for (size_t j = 0; j < strlen(binarystr); j++)
         {
-            if ('1' == str[j] || '0' == str[j])
+            if ('1' == binarystr[j] || '0' == binarystr[j])
                 size++;
         }
-        if (firsttime)
-        {
-            *cells = malloc(size * sizeof(cells[0]));
-            firsttime = 0;
-        }
-        else
-        {
-            int *tmp = realloc(*cells, size * sizeof(int));
-            if (tmp == NULL)
-            {
-                printf("fak");
-            }
-            else
-            {
-                *cells = tmp;
-            }
-        }
 
-        for (size_t j = 0; j < strlen(str); j++)
+        *cells = malloc(size * sizeof(int));
+
+        for (size_t j = 0; j < strlen(binarystr); j++)
         {
-            if ('1' == str[j])
+            if ('1' == binarystr[j])
             {
                 *(*(cells) + i) = 1;
                 i++;
             }
-            else if ('0' == str[j])
+            else if ('0' == binarystr[j])
             {
                 *(*(cells) + i) = 0;
                 i++;
