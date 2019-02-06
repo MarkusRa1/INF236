@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <time.h>
 #define MAXCHAR 1000
 
 int makeLookupTable(int *lookupTable, char *filename);
@@ -29,8 +30,8 @@ int main(int argc, char **argv)
     int *sendcount = malloc(comm_sz * sizeof(int));
     int cellsSize;
     char *rulename = "mod2.txt";
-    char *initname = "k10.txt";
-    int numOfIt = 100;
+    char *initname = "k11.txt";
+    int numOfIt = 100000;
     if (argc == 4)
     {
         rulename = argv[1];
@@ -77,6 +78,8 @@ int main(int argc, char **argv)
     int myCellsSize = sendcount[my_rank];
     int *recvarr = malloc(myCellsSize * sizeof(int));
 
+    clock_t start, end1, end2;
+    start = clock();
     MPI_Scatterv(cells, sendcount, displays, MPI_INT, &recvarr[0], myCellsSize, MPI_INT, 0, MPI_COMM_WORLD);
 
     int *history = (int *)malloc(myCellsSize * (numOfIt + 1) * sizeof(int));
@@ -94,15 +97,19 @@ int main(int argc, char **argv)
         rbuf = (int *)malloc(cellsSize * sizeof(int));
         historyall = (int *)malloc(cellsSize * (numOfIt + 1) * sizeof(int));
     }
-
+    end1 = clock();
     for (size_t i = 0; i < numOfIt + 1; i++)
     {
         MPI_Gatherv(history + i * myCellsSize, sendcount[my_rank], MPI_INT, historyall + i * cellsSize, sendcount, displays, MPI_INT, 0, MPI_COMM_WORLD);
     }
+    end2 = clock();
     MPI_Finalize(); // No MPI function after this call
     if (my_rank == 0)
     {
-        writeToFile("de", historyall, cellsSize, numOfIt + 1);
+        double t1 = ((double) (end1-start))/CLOCKS_PER_SEC;
+        double t2 = ((double) (end2-start))/CLOCKS_PER_SEC;
+        printf("%fs, %fs\n", t1, t2);
+        // writeToFile("de", historyall, cellsSize, numOfIt + 1);
     }
     return 0;
 }
