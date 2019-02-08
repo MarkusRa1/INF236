@@ -33,8 +33,8 @@ int main(int argc, char *argv[])
 
     makeLookupTable(lookuptable, rulename);
     getCellInfo(&cells, initname, &w, &h);
-    printf("test1\n");
-    runIterations(numOfIt, lookuptable, sizeof(lookuptable) / sizeof(lookuptable[0]), cells, w, h);
+    // printf("test1\n");
+    // runIterations(numOfIt, lookuptable, sizeof(lookuptable) / sizeof(lookuptable[0]), cells, w, h);
     // free(cells);
     return 0;
 }
@@ -42,13 +42,14 @@ int main(int argc, char *argv[])
 int f(int *lookupTable, int neigb[8])
 {
     int weirdvals = 0;
-    for(size_t i = 0; i < 8; i++)
+    for (size_t i = 0; i < 8; i++)
     {
-        if (neigb[i] != 0 && neigb[i] != 0) {
+        if (neigb[i] != 0 && neigb[i] != 0)
+        {
             weirdvals = 1;
         }
     }
-    
+
     if (weirdvals)
     {
         printf("weird values:");
@@ -59,7 +60,7 @@ int f(int *lookupTable, int neigb[8])
     {
         int index = 0;
         int pow2 = 1;
-        for(size_t i = 0; i < 8; i++)
+        for (size_t i = 0; i < 8; i++)
         {
             index += neigb[i] * pow2;
             pow2 *= 2;
@@ -159,6 +160,11 @@ int getCellInfo(int **cells, char *filename, int *w, int *h)
     char str[MAXCHAR];
     char *p = "../";
     char *path = calloc(strlen(p) + strlen(filename) + 1, sizeof(char));
+    if (path == NULL) {
+        perror("Path failed alloc\n");
+        exit(EXIT_FAILURE);
+    }
+    
     strcat(path, p);
     strcat(path, filename);
     int size = 0;
@@ -170,46 +176,63 @@ int getCellInfo(int **cells, char *filename, int *w, int *h)
         printf("Could not open file %s", filename);
         return 1;
     }
-    
+
+    free(path);
     if (fgets(str, MAXCHAR, fp) != NULL)
     {
-        char *end;
         len = atoi(str);
     }
     *w = len;
     *h = len;
-    *cells = malloc(len * len * sizeof(int)); 
-    // printf("test2\n");
-    int ih = 0;
-    int iw = 0;
-    char *binarystr = calloc(len+1, sizeof(char));
-    while (fgets(binarystr, len+1, fp) != NULL)
-    {
-        iw = 0;
-        for (size_t j = 0; j < strlen(binarystr); j++)
-        {
-            if ('1' == binarystr[j] || '0' == binarystr[j])
-                size++;
-        }
 
-        for (size_t j = 0; j < strlen(binarystr); j++)
+    *cells = malloc((*w) * (*h) * sizeof(int));
+    if (*cells == NULL) {
+        fclose(fp);
+        perror("cells failed malloc\n");
+        exit(EXIT_FAILURE);
+    }
+    
+    char *binarystr = malloc((len + 2) * sizeof(char));
+    if (binarystr == NULL) {
+        free(cells);
+        perror("binarystr failed malloc\n");
+        exit(EXIT_FAILURE);
+    }
+
+    int iw = 0;
+    for (int ih = 0; fgets(binarystr, len + 2, fp) != NULL; ih++)
+    {
+        if (binarystr[0] == '\n')
         {
-            if ('1' == binarystr[j])
+            ih--;
+        }
+        else
+        {
+            iw = 0;
+            for (size_t j = 0; j < *w; j++)
             {
-                *(*(cells) + len*ih + iw) = 1;
-                iw++;
-            }
-            else if ('0' == binarystr[j])
-            {
-                *(*(cells) + len*ih + iw) = 0;
-                iw++;
+                if ('1' == binarystr[j])
+                {
+                    *(*(cells) + *(w)*ih + iw) = 1;
+                    iw++;
+                }
+                else if ('0' == binarystr[j])
+                {
+                    *(*(cells) + *(w)*ih + iw) = 0;
+                    iw++;
+                } else
+                {
+                    perror("Unexpected values in configuration file\n");
+                }
+                
             }
         }
-        ih++;
     }
-    printf("test3\n");
+    free(binarystr);
     fclose(fp);
-    return size;
+    printf("Matrix t=0: \n");
+    printMatrix(*cells, *w, *h);
+    return 0;
 }
 
 void printArray(int *arr, int size)
@@ -226,11 +249,11 @@ void runIterations(int numOfIt, int *lookupTable, const int lookupSize, int *cel
     int totalhsz = w * h * 2 * sizeof(int);
     printf("hello");
     int *history = malloc(totalhsz);
-    for(size_t i = 0; i < h; i++)
+    for (size_t i = 0; i < h; i++)
     {
-        for(size_t j = 0; j < w; j++)
+        for (size_t j = 0; j < w; j++)
         {
-            *(history + i*w + j) = *(cells + i*w + j);
+            *(history + i * w + j) = *(cells + i * w + j);
         }
     }
     printMatrix(history, w, h);
@@ -239,10 +262,10 @@ void runIterations(int numOfIt, int *lookupTable, const int lookupSize, int *cel
     for (size_t i = 0; i < numOfIt; i++)
     {
         int currit = mod(i, 2);
-        int nextit = mod(i+1, 2);
+        int nextit = mod(i + 1, 2);
         for (size_t jh = 0; jh < h; jh++)
         {
-            for(size_t jw = 0; jw < w; jw++)
+            for (size_t jw = 0; jw < w; jw++)
             {
                 int left = mod(jw - 1, w);
                 int right = mod(jw + 1, w);
@@ -251,15 +274,15 @@ void runIterations(int numOfIt, int *lookupTable, const int lookupSize, int *cel
                 int leftright[3] = {left, jw, right};
                 int updown[3] = {up, jh, down};
                 int ineig = 0;
-                for(size_t row = 0; row < 3; row++)
+                for (size_t row = 0; row < 3; row++)
                 {
-                    for(size_t col = 0; col < 3; col++)
+                    for (size_t col = 0; col < 3; col++)
                     {
-                        neigb[ineig] = *(history + currit*w*h + updown[col]*w + leftright[row]);
+                        neigb[ineig] = *(history + currit * w * h + updown[col] * w + leftright[row]);
                     }
                 }
                 int nextval = f(lookupTable, neigb);
-                *(history + nextit*w*h + jh*w + jw) = nextval;
+                *(history + nextit * w * h + jh * w + jw) = nextval;
             }
         }
     }
@@ -289,7 +312,6 @@ void printMatrix(int *mat, int w, int h)
 {
     for (int i = 0; i < h; i++)
     {
-        printf("t = %3d: ", i);
         printArray(mat + i * w, w);
     }
 }
