@@ -1,6 +1,6 @@
 import random
 
-sz = 20
+sz = 3
 f= open("ProblemSet1/config2D_" + str(sz) + ".txt","w+")
 f.write(str(sz) + "\n")
 for i in range(sz):

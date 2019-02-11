@@ -33,18 +33,17 @@ int main(int argc, char *argv[])
 
     makeLookupTable(lookuptable, rulename);
     getCellInfo(&cells, initname, &w, &h);
-    // printf("test1\n");
-    // runIterations(numOfIt, lookuptable, sizeof(lookuptable) / sizeof(lookuptable[0]), cells, w, h);
+    runIterations(numOfIt, lookuptable, sizeof(lookuptable) / sizeof(lookuptable[0]), cells, w, h);
     // free(cells);
     return 0;
 }
 
-int f(int *lookupTable, int neigb[8])
+int f(int *lookupTable, int neigb[9])
 {
     int weirdvals = 0;
-    for (size_t i = 0; i < 8; i++)
+    for (size_t i = 0; i < 9; i++)
     {
-        if (neigb[i] != 0 && neigb[i] != 0)
+        if (neigb[i] != 0 && neigb[i] != 1)
         {
             weirdvals = 1;
         }
@@ -53,18 +52,22 @@ int f(int *lookupTable, int neigb[8])
     if (weirdvals)
     {
         printf("weird values:");
-        printArray(neigb, 8);
+        printArray(neigb, 9);
         return 0;
     }
     else
     {
         int index = 0;
         int pow2 = 1;
-        for (size_t i = 0; i < 8; i++)
+        for (int i = 8; i >= 0; i--)
         {
-            index += neigb[i] * pow2;
+            int n = neigb[i];
+            index += n * pow2;
             pow2 *= 2;
         }
+
+        // printf("%3d, %d <-", index, lookupTable[index]);
+        // printArray(neigb, 9);
         return lookupTable[index];
     }
 }
@@ -230,8 +233,6 @@ int getCellInfo(int **cells, char *filename, int *w, int *h)
     }
     free(binarystr);
     fclose(fp);
-    printf("Matrix t=0: \n");
-    printMatrix(*cells, *w, *h);
     return 0;
 }
 
@@ -247,7 +248,6 @@ void printArray(int *arr, int size)
 void runIterations(int numOfIt, int *lookupTable, const int lookupSize, int *cells, int w, int h)
 {
     int totalhsz = w * h * 2 * sizeof(int);
-    printf("hello");
     int *history = malloc(totalhsz);
     for (size_t i = 0; i < h; i++)
     {
@@ -256,7 +256,6 @@ void runIterations(int numOfIt, int *lookupTable, const int lookupSize, int *cel
             *(history + i * w + j) = *(cells + i * w + j);
         }
     }
-    printMatrix(history, w, h);
 
     int neigb[9];
     for (size_t i = 0; i < numOfIt; i++)
@@ -265,6 +264,7 @@ void runIterations(int numOfIt, int *lookupTable, const int lookupSize, int *cel
         int nextit = mod(i + 1, 2);
         for (size_t jh = 0; jh < h; jh++)
         {
+
             for (size_t jw = 0; jw < w; jw++)
             {
                 int left = mod(jw - 1, w);
@@ -274,20 +274,22 @@ void runIterations(int numOfIt, int *lookupTable, const int lookupSize, int *cel
                 int leftright[3] = {left, jw, right};
                 int updown[3] = {up, jh, down};
                 int ineig = 0;
-                for (size_t row = 0; row < 3; row++)
+                for (size_t col = 0; col < 3; col++)
                 {
-                    for (size_t col = 0; col < 3; col++)
+                    for (size_t row = 0; row < 3; row++)
                     {
                         neigb[ineig] = *(history + currit * w * h + updown[col] * w + leftright[row]);
+                        ineig++;
                     }
                 }
                 int nextval = f(lookupTable, neigb);
+                int k = nextit * w * h + jh * w + jw;
                 *(history + nextit * w * h + jh * w + jw) = nextval;
             }
         }
     }
-
-    writeToFile("data.csv", history + mod(numOfIt, 2), w, h);
+    // printMatrix(history + mod(numOfIt, 2) * w * h, w, h);
+    writeToFile("data.csv", history + mod(numOfIt, 2) * w * h, w, h);
 }
 
 void writeToFile(char *fileName, int *history, int w, int h)
