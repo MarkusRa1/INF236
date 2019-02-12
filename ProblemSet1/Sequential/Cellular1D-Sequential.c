@@ -15,7 +15,7 @@ void writeToFile(char *fileName, int *history, int h, int w);
 int main(int argc, char *argv[])
 {
     char *rulename = "mod2.txt";
-    char *initname = "k10.txt";
+    char *initname = "middle30.txt";
     int numOfIt = 100;
     if (argc == 4)
     {

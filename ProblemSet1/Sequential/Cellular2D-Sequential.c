@@ -18,7 +18,7 @@ int mod(int x, int m);
 int main(int argc, char *argv[])
 {
     char *rulename = "gameOfLife.txt";
-    char *initname = "config2D_20.txt";
+    char *initname = "config2D_5.txt";
     int numOfIt = 1;
     if (argc == 4)
     {
