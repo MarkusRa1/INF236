@@ -45,7 +45,7 @@ int main(int argc, char **argv)
         // getCellInfo(&cells, initname, &w, &h);
         w = sz;
         h = sz;
-        cells = malloc(w*h*sizeof(int));
+        cells = malloc(w * h * sizeof(int));
         generateConfig(cells, sz);
 
         int rowsPerProc = h / comm_sz;
@@ -86,14 +86,15 @@ int main(int argc, char **argv)
     start = MPI_Wtime();
 
     MPI_Scatterv(cells, sendcount, displays, MPI_INT, history, myCellsSize, MPI_INT, 0, MPI_COMM_WORLD);
-    if (my_rank == 0) {
+    if (my_rank == 0)
+    {
         free(cells);
     }
-    
+
     runIterations(numOfIt, lookuptable, 512, history, w, myH, my_rank, comm_sz);
     end1 = MPI_Wtime();
     free(lookuptable);
-    
+
     int *historyall;
     if (my_rank == 0)
     {
@@ -250,6 +251,8 @@ void runIterations(int numOfIt, int *lookupTable, int lookupSize, int *history, 
     int upneig = mod(my_rank - 1, comm_sz);
     int *updownarr = malloc(w * 2 * sizeof(int));
     int neigb[9];
+    int even = (mod(my_rank, 2) == 0);
+    int oddcmsz = (mod(comm_sz, 2) == 1);
 
     for (int i = 0; i < numOfIt; i++)
     {
@@ -257,14 +260,23 @@ void runIterations(int numOfIt, int *lookupTable, int lookupSize, int *history, 
         int nextit = mod(i + 1, 2);
         if (comm_sz > 1)
         {
-            if (mod(my_rank, 2) == 0)
+            if (even)
             {
                 // printf("%d send to %d\n", my_rank, downneig);
                 MPI_Send(history + currit * w * h + w * (h - 1), w, MPI_INT, downneig, 1, MPI_COMM_WORLD);
                 MPI_Recv(updownarr + w, w, MPI_INT, downneig, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                 // printf("%d send to %d\n", my_rank, upneig);
-                MPI_Send(history + currit * w * h, w, MPI_INT, upneig, 1, MPI_COMM_WORLD);
-                MPI_Recv(updownarr, w, MPI_INT, upneig, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                if (my_rank == 0 && oddcmsz)
+                {
+                    MPI_Recv(updownarr, w, MPI_INT, upneig, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                    MPI_Send(history + currit * w * h, w, MPI_INT, upneig, 1, MPI_COMM_WORLD);
+                }
+                else
+                {
+                    MPI_Send(history + currit * w * h, w, MPI_INT, upneig, 1, MPI_COMM_WORLD);
+                    MPI_Recv(updownarr, w, MPI_INT, upneig, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                }
+
                 // printf("%d: ", my_rank);
                 // printArray(updownarr, w*2);
             }
@@ -450,11 +462,11 @@ void writeToFile(char *fileName, int *history, int w, int h)
 
 void generateConfig(int *cnfg, int sz)
 {
-    for(size_t i = 0; i < sz; i++)
+    for (size_t i = 0; i < sz; i++)
     {
-        for(size_t j = 0; j < sz; j++)
+        for (size_t j = 0; j < sz; j++)
         {
-            *(cnfg + sz*i + j) = mod(rand(), 2);
+            *(cnfg + sz * i + j) = mod(rand(), 2);
         }
     }
 }
