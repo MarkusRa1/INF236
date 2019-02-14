@@ -214,9 +214,7 @@ void runIterations(int numOfIt, int *lookupTable, int lookupSize, int *history, 
 {
     int rightneig = mod(my_rank + 1, comm_sz);
     int leftneig = mod(my_rank - 1, comm_sz);
-    // printf("left right: %d %d %d\n", leftneig, rightneig, comm_sz);
-    // printf("t = %d: ", 0);
-    // printArray(history, cellsSize);
+    
     int sz = (numOfIt + 1) * cellsSize;
     int leftVal;
     int rightVal;

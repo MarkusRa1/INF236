@@ -15,6 +15,7 @@ int f(int *lookupTable, int neigb[9]);
 void writeToFile(char *fileName, int *history, int w, int h);
 int mod(int x, int m);
 void printMatrix(int *mat, int w, int h);
+void generateConfig(int *cnfg, int sz);
 
 int main(int argc, char **argv)
 {
@@ -29,8 +30,8 @@ int main(int argc, char **argv)
     int *cells, w, h;
     int *sendcount = malloc(comm_sz * sizeof(int));
     char *rulename = "gameOfLife.txt";
-    char *initname = "config2D_20.txt";
-    int numOfIt = 100000;
+    char *initname = "config2D_5.txt";
+    int numOfIt = 10000;
     if (argc == 4)
     {
         rulename = argv[1];
@@ -40,7 +41,12 @@ int main(int argc, char **argv)
 
     if (my_rank == 0)
     {
-        getCellInfo(&cells, initname, &w, &h);
+        // getCellInfo(&cells, initname, &w, &h);
+        int sz = 200;
+        w = sz;
+        h = sz;
+        cells = malloc(w*h*sizeof(int));
+        generateConfig(cells, sz);
 
         int rowsPerProc = h / comm_sz;
         int rest = h - rowsPerProc * comm_sz;
@@ -58,11 +64,6 @@ int main(int argc, char **argv)
             }
         }
         makeLookupTable(lookuptable, rulename);
-        // printArray(lookuptable, 512);
-        // MPI_Scatter to split an array evenly
-        // Assume that it breaks up evenly
-        // Gather something something
-        // Exercise 2 same thing?
     }
 
     MPI_Bcast(lookuptable, 512, MPI_INT, 0, MPI_COMM_WORLD);
@@ -77,7 +78,7 @@ int main(int argc, char **argv)
     }
 
     int myCellsSize = sendcount[my_rank];
-    printf("cellsize: %d\n", myCellsSize);
+
     int *history = malloc(myCellsSize * 2 * sizeof(int));
     int myH = myCellsSize / w;
 
@@ -85,10 +86,12 @@ int main(int argc, char **argv)
     start = clock();
 
     MPI_Scatterv(cells, sendcount, displays, MPI_INT, history, myCellsSize, MPI_INT, 0, MPI_COMM_WORLD);
-    // printMatrix(history, w, myCellsSize);
+    if (my_rank == 0) {
+        free(cells);
+    }
+    
     runIterations(numOfIt, lookuptable, 512, history, w, myH, my_rank, comm_sz);
-    // printMatrix(history + mod(numOfIt, 2) * w * myH, w, myH);
-    // printMatrix(history + mod(numOfIt, 2) * w * myH, w, myH);
+    free(lookuptable);
 
     int *historyall;
     if (my_rank == 0)
@@ -96,20 +99,12 @@ int main(int argc, char **argv)
         historyall = (int *)malloc(w * h * sizeof(int));
     }
     end1 = clock();
-    // if (my_rank == 0)
-    // {
-    //     printf("p%d:\n", my_rank);
-    //     printMatrix(history + mod(numOfIt, 2) * w * myH, w, h);
-    // }
 
     MPI_Gatherv(history + mod(numOfIt, 2) * w * myH, sendcount[my_rank], MPI_INT, historyall, sendcount, displays, MPI_INT, 0, MPI_COMM_WORLD);
 
-    // if (my_rank != 0) {
-    //     printf("p%d:\n", my_rank);
-    //     printMatrix(history + mod(numOfIt, 2) * w * myH, w, h);
-    // }
-    
     end2 = clock();
+    free(history);
+    free(sendcount);
     MPI_Finalize(); // No MPI function after this call
     if (my_rank == 0)
     {
@@ -117,8 +112,9 @@ int main(int argc, char **argv)
         double t2 = ((double)(end2 - start)) / CLOCKS_PER_SEC;
         printf("%fs, %fs\n", t1, t2);
         printf("Matrix: \n");
-        printMatrix(historyall, w, h);
-        writeToFile("de", historyall, w, h);
+        // printMatrix(historyall, w, h);
+        // writeToFile("de", historyall, w, h);
+        free(historyall);
     }
     return 0;
 }
@@ -255,9 +251,6 @@ void runIterations(int numOfIt, int *lookupTable, int lookupSize, int *history, 
     int upneig = mod(my_rank - 1, comm_sz);
     int *updownarr = malloc(w * 2 * sizeof(int));
     int neigb[9];
-
-    // printf("p%d: \n", my_rank);
-    // printMatrix(history, w, h);
 
     for (int i = 0; i < numOfIt; i++)
     {
@@ -454,4 +447,15 @@ void writeToFile(char *fileName, int *history, int w, int h)
         fprintf(fp, "%d\n", *(history + i * w + w - 1));
     }
     fclose(fp);
+}
+
+void generateConfig(int *cnfg, int sz)
+{
+    for(size_t i = 0; i < sz; i++)
+    {
+        for(size_t j = 0; j < sz; j++)
+        {
+            *(cnfg + sz*i + j) = mod(rand(), 2);
+        }
+    }
 }
