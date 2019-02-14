@@ -32,17 +32,17 @@ int main(int argc, char **argv)
     char *rulename = "gameOfLife.txt";
     char *initname = "config2D_5.txt";
     int numOfIt = 10000;
+    int sz = 10;
     if (argc == 4)
     {
         rulename = argv[1];
-        initname = argv[2];
+        sz = atoi(argv[2]);
         numOfIt = atoi(argv[3]);
     }
 
     if (my_rank == 0)
     {
         // getCellInfo(&cells, initname, &w, &h);
-        int sz = 200;
         w = sz;
         h = sz;
         cells = malloc(w*h*sizeof(int));
@@ -82,8 +82,8 @@ int main(int argc, char **argv)
     int *history = malloc(myCellsSize * 2 * sizeof(int));
     int myH = myCellsSize / w;
 
-    clock_t start, end1, end2;
-    start = clock();
+    double start, end1, end2;
+    start = MPI_Wtime();
 
     MPI_Scatterv(cells, sendcount, displays, MPI_INT, history, myCellsSize, MPI_INT, 0, MPI_COMM_WORLD);
     if (my_rank == 0) {
@@ -91,27 +91,26 @@ int main(int argc, char **argv)
     }
     
     runIterations(numOfIt, lookuptable, 512, history, w, myH, my_rank, comm_sz);
+    end1 = MPI_Wtime();
     free(lookuptable);
-
+    
     int *historyall;
     if (my_rank == 0)
     {
         historyall = (int *)malloc(w * h * sizeof(int));
     }
-    end1 = clock();
 
     MPI_Gatherv(history + mod(numOfIt, 2) * w * myH, sendcount[my_rank], MPI_INT, historyall, sendcount, displays, MPI_INT, 0, MPI_COMM_WORLD);
 
-    end2 = clock();
+    end2 = MPI_Wtime();
     free(history);
     free(sendcount);
     MPI_Finalize(); // No MPI function after this call
     if (my_rank == 0)
     {
-        double t1 = ((double)(end1 - start)) / CLOCKS_PER_SEC;
-        double t2 = ((double)(end2 - start)) / CLOCKS_PER_SEC;
-        printf("%fs, %fs\n", t1, t2);
-        printf("Matrix: \n");
+        double t1 = (end1 - start);
+        double t2 = (end2 - start);
+        printf("size: %d\niterations: %d\ntime taken: %fs, %fs\n", sz, numOfIt, t1, t2);
         // printMatrix(historyall, w, h);
         // writeToFile("de", historyall, w, h);
         free(historyall);
