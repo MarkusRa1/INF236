@@ -1,0 +1,76 @@
+\documentclass[a4paper]{extarticle}
+\usepackage{graphicx}
+\usepackage[a4paper]{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{hyperref}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{tikz}
+\usepackage{listings}
+\usepackage{blkarray}
+\usepackage{color}
+ 
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+ 
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+ 
+\lstset{
+	style=mystyle,
+	frame=single	
+}
+
+
+\setlength\parindent{0pt}
+
+\makeatletter
+\renewcommand*\env@matrix[1][*\c@MaxMatrixCols c]{%
+  \hskip -\arraycolsep
+  \let\@ifnextchar\new@ifnextchar
+  \array{#1}}
+\makeatother
+
+\newcommand*{\putunder}[2]{%
+  {\mathop{#1}_{\textstyle #2}}%
+}
+
+\newcommand{\stirling}[2]{\genfrac{}{}{0pt}{0}{#1}{#2}}
+
+\newcommand{\R}{\mathbb{R}}
+
+\title{Project 1 INF283}
+\author{Markus Ragnhildstveit, hef005}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+\newpage
+You will find python documentation in each function in the code files which contains what type the arguments is and what the function returns. To run the program you just run the "test\char`_run.py" file. If you want to see the tree structure, uncomment the last 2 lines.
+
+\section{2D}
+\
+
+
+\end{document}

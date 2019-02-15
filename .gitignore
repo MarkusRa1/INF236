@@ -30,3 +30,78 @@
 *.exe
 *.out
 *.app
+
+/.buildpath
+/build/
+*/archive/
+
+__MACOSX
+.DS_Store
+
+.project
+.settings
+.classpath
+.sass-cache/
+
+# OS generated files #
+######################
+*/.DS_Store
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Icon?
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Packages #
+############
+# it's better to unpack these files and commit the raw source
+# git has its own built in compression methods
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# Latex projects #
+##################
+*.log
+*.aux
+*.synctex.gz
+.*.lb
+
+# Kom en .out og .toc fil når jeg opprettet .pdf fra .tex:
+*.out 
+*.toc
+
+# Java
+.class
+
+# Eclipse
+bin/
+.settings/
+.classpath
+.project
+
+# IntelliJ
+.idea
+.iml
+
+# Gradle
+.gradle/
+build/
+
+# Matlab
+*.m~
+*.asv
+
+# Xcode & Visual Studio
+*.xcodeproj
+.vs/
+
