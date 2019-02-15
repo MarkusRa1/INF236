@@ -112,7 +112,8 @@ int main(int argc, char **argv)
     {
         double t1 = (end1 - start);
         double t2 = (end2 - start);
-        printf("size: %d\niterations: %d\ntime taken: %fs, %fs\n", sz, numOfIt, t1, t2);
+        printf("%lu bits/bytes\n", sizeof(short));
+        printf("size: %d\niterations: %d\ntime taken: %fs, %fs\nSpeed: %fMBps\n", sz, numOfIt, t1, t2, ((double) sz*sz*numOfIt)/t2*sizeof(short)/1000000);
         // printMatrix(historyall, w, h);
         // writeToFile("de", historyall, w, h);
         free(historyall);
