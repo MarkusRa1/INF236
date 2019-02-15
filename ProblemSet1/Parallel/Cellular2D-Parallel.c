@@ -7,15 +7,15 @@
 #define MAXCHAR 1000
 
 int makeLookupTable(int *lookupTable, char *filename);
-int getCellInfo(int **cells, char *filename, int *w, int *h);
+int getCellInfo(short **cells, char *filename, int *w, int *h);
 char **str_split(char *a_str, const char a_delim);
 void printArray(int *arr, int size);
-void runIterations(int numOfIt, int *lookupTable, const int lookupSize, int *history, int w, int h, int my_rank, int comm_sz);
+void runIterations(int numOfIt, int *lookupTable, const int lookupSize, short *history, int w, int h, int my_rank, int comm_sz);
 int f(int *lookupTable, int neigb[9]);
 void writeToFile(char *fileName, int *history, int w, int h);
 int mod(int x, int m);
 void printMatrix(int *mat, int w, int h);
-void generateConfig(int *cnfg, int sz);
+void generateConfig(short *cnfg, int sz);
 
 int main(int argc, char **argv)
 {
@@ -27,7 +27,8 @@ int main(int argc, char **argv)
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 
     int *lookuptable = malloc(512 * sizeof(int));
-    int *cells, w, h;
+    short *cells;
+    int w, h;
     int *sendcount = malloc(comm_sz * sizeof(int));
     char *rulename = "gameOfLife.txt";
     char *initname = "config2D_5.txt";
@@ -45,7 +46,7 @@ int main(int argc, char **argv)
         // getCellInfo(&cells, initname, &w, &h);
         w = sz;
         h = sz;
-        cells = malloc(w * h * sizeof(int));
+        cells = malloc(w * h * sizeof(short));
         generateConfig(cells, sz);
 
         int rowsPerProc = h / comm_sz;
@@ -79,13 +80,13 @@ int main(int argc, char **argv)
 
     int myCellsSize = sendcount[my_rank];
 
-    int *history = malloc(myCellsSize * 2 * sizeof(int));
+    short *history = malloc(myCellsSize * 2 * sizeof(short));
     int myH = myCellsSize / w;
 
     double start, end1, end2;
     start = MPI_Wtime();
 
-    MPI_Scatterv(cells, sendcount, displays, MPI_INT, history, myCellsSize, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(cells, sendcount, displays, MPI_SHORT, history, myCellsSize, MPI_SHORT, 0, MPI_COMM_WORLD);
     if (my_rank == 0)
     {
         free(cells);
@@ -95,13 +96,13 @@ int main(int argc, char **argv)
     end1 = MPI_Wtime();
     free(lookuptable);
 
-    int *historyall;
+    short *historyall;
     if (my_rank == 0)
     {
-        historyall = (int *)malloc(w * h * sizeof(int));
+        historyall = (short *)malloc(w * h * sizeof(short));
     }
 
-    MPI_Gatherv(history + mod(numOfIt, 2) * w * myH, sendcount[my_rank], MPI_INT, historyall, sendcount, displays, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(history + mod(numOfIt, 2) * w * myH, sendcount[my_rank], MPI_SHORT, historyall, sendcount, displays, MPI_SHORT, 0, MPI_COMM_WORLD);
 
     end2 = MPI_Wtime();
     free(history);
@@ -158,7 +159,7 @@ int makeLookupTable(int *lookupTable, char *filename)
     return 0;
 }
 
-int getCellInfo(int **cells, char *filename, int *w, int *h)
+int getCellInfo(short **cells, char *filename, int *w, int *h)
 {
     FILE *fp;
     char str[MAXCHAR];
@@ -245,11 +246,11 @@ int mod(int x, int m)
     return (x % m + m) % m;
 }
 
-void runIterations(int numOfIt, int *lookupTable, int lookupSize, int *history, int w, int h, int my_rank, int comm_sz)
+void runIterations(int numOfIt, int *lookupTable, int lookupSize, short *history, int w, int h, int my_rank, int comm_sz)
 {
     int downneig = mod(my_rank + 1, comm_sz);
     int upneig = mod(my_rank - 1, comm_sz);
-    int *updownarr = malloc(w * 2 * sizeof(int));
+    short *updownarr = malloc(w * 2 * sizeof(short));
     int neigb[9];
     int even = (mod(my_rank, 2) == 0);
     int oddcmsz = (mod(comm_sz, 2) == 1);
@@ -263,18 +264,18 @@ void runIterations(int numOfIt, int *lookupTable, int lookupSize, int *history, 
             if (even)
             {
                 // printf("%d send to %d\n", my_rank, downneig);
-                MPI_Send(history + currit * w * h + w * (h - 1), w, MPI_INT, downneig, 1, MPI_COMM_WORLD);
-                MPI_Recv(updownarr + w, w, MPI_INT, downneig, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                MPI_Send(history + currit * w * h + w * (h - 1), w, MPI_SHORT, downneig, 1, MPI_COMM_WORLD);
+                MPI_Recv(updownarr + w, w, MPI_SHORT, downneig, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                 // printf("%d send to %d\n", my_rank, upneig);
                 if (my_rank == 0 && oddcmsz)
                 {
-                    MPI_Recv(updownarr, w, MPI_INT, upneig, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                    MPI_Send(history + currit * w * h, w, MPI_INT, upneig, 1, MPI_COMM_WORLD);
+                    MPI_Recv(updownarr, w, MPI_SHORT, upneig, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                    MPI_Send(history + currit * w * h, w, MPI_SHORT, upneig, 1, MPI_COMM_WORLD);
                 }
                 else
                 {
-                    MPI_Send(history + currit * w * h, w, MPI_INT, upneig, 1, MPI_COMM_WORLD);
-                    MPI_Recv(updownarr, w, MPI_INT, upneig, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                    MPI_Send(history + currit * w * h, w, MPI_SHORT, upneig, 1, MPI_COMM_WORLD);
+                    MPI_Recv(updownarr, w, MPI_SHORT, upneig, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                 }
 
                 // printf("%d: ", my_rank);
@@ -283,11 +284,11 @@ void runIterations(int numOfIt, int *lookupTable, int lookupSize, int *history, 
             else
             {
                 // printf("%d recv from %d\n", my_rank, upneig);
-                MPI_Recv(updownarr, w, MPI_INT, upneig, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                MPI_Send(history + currit * w * h, w, MPI_INT, upneig, 1, MPI_COMM_WORLD);
+                MPI_Recv(updownarr, w, MPI_SHORT, upneig, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                MPI_Send(history + currit * w * h, w, MPI_SHORT, upneig, 1, MPI_COMM_WORLD);
                 // printf("%d recv from %d\n", my_rank, downneig);
-                MPI_Recv(updownarr + w, w, MPI_INT, downneig, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                MPI_Send(history + currit * w * h + w * (h - 1), w, MPI_INT, downneig, 1, MPI_COMM_WORLD);
+                MPI_Recv(updownarr + w, w, MPI_SHORT, downneig, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                MPI_Send(history + currit * w * h + w * (h - 1), w, MPI_SHORT, downneig, 1, MPI_COMM_WORLD);
                 // printf("%d: ", my_rank);
                 // printArray(updownarr, w*2);
             }
@@ -308,13 +309,13 @@ void runIterations(int numOfIt, int *lookupTable, int lookupSize, int *history, 
         {
             for (size_t jw = 0; jw < w; jw++)
             {
-                int left = mod(jw - 1, w);
-                int right = mod(jw + 1, w);
-                int up = mod(jh - 1, h);
-                int down = mod(jh + 1, h);
-                int leftright[3] = {left, jw, right};
-                int updown[3] = {up, jh, down};
-                int ineig = 0;
+                short left = mod(jw - 1, w);
+                short right = mod(jw + 1, w);
+                short up = mod(jh - 1, h);
+                short down = mod(jh + 1, h);
+                short leftright[3] = {left, jw, right};
+                short updown[3] = {up, jh, down};
+                short ineig = 0;
                 for (size_t col = 0; col < 3; col++)
                 {
                     for (size_t row = 0; row < 3; row++)
@@ -334,9 +335,8 @@ void runIterations(int numOfIt, int *lookupTable, int lookupSize, int *history, 
                         ineig++;
                     }
                 }
-                int nextval = f(lookupTable, neigb);
-                int k = nextit * w * h + jh * w + jw;
-                *(history + nextit * w * h + jh * w + jw) = nextval;
+                short nextval = f(lookupTable, neigb);
+                *(history + nextit * w * h + jh * w + jw) = (short) nextval;
             }
         }
     }
@@ -460,13 +460,13 @@ void writeToFile(char *fileName, int *history, int w, int h)
     fclose(fp);
 }
 
-void generateConfig(int *cnfg, int sz)
+void generateConfig(short *cnfg, int sz)
 {
     for (size_t i = 0; i < sz; i++)
     {
         for (size_t j = 0; j < sz; j++)
         {
-            *(cnfg + sz * i + j) = mod(rand(), 2);
+            *(cnfg + sz * i + j) = (short) mod(rand(), 2);
         }
     }
 }
