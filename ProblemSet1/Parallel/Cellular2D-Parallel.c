@@ -113,7 +113,7 @@ int main(int argc, char **argv)
         double t1 = (end1 - start);
         double t2 = (end2 - start);
         printf("%lu bits/bytes\n", sizeof(short));
-        printf("size: %d\niterations: %d\ntime taken: %fs, %fs\nSpeed: %fMBps\n", sz, numOfIt, t1, t2, ((double) sz*sz*numOfIt)/t2*sizeof(short)/1000000);
+        printf("size: %d\niterations: %d\ntime taken: %fs, %fs\nSpeed: %fMBps\n", sz, numOfIt, t1, t2, ((double)sz * sz * numOfIt) / t2 * sizeof(short) / 1000000);
         // printMatrix(historyall, w, h);
         // writeToFile("de", historyall, w, h);
         free(historyall);
@@ -310,12 +310,8 @@ void runIterations(int numOfIt, int *lookupTable, int lookupSize, short *history
         {
             for (size_t jw = 0; jw < w; jw++)
             {
-                short left = mod(jw - 1, w);
-                short right = mod(jw + 1, w);
-                short up = mod(jh - 1, h);
-                short down = mod(jh + 1, h);
-                short leftright[3] = {left, jw, right};
-                short updown[3] = {up, jh, down};
+                short leftright[3] = {mod(jw - 1, w), jw, mod(jw + 1, w)};
+                short updown[3] = {mod(jh - 1, h), jh, mod(jh + 1, h)};
                 short ineig = 0;
                 for (size_t col = 0; col < 3; col++)
                 {
@@ -337,7 +333,7 @@ void runIterations(int numOfIt, int *lookupTable, int lookupSize, short *history
                     }
                 }
                 short nextval = f(lookupTable, neigb);
-                *(history + nextit * w * h + jh * w + jw) = (short) nextval;
+                *(history + nextit * w * h + jh * w + jw) = (short)nextval;
             }
         }
     }
@@ -347,37 +343,24 @@ void runIterations(int numOfIt, int *lookupTable, int lookupSize, short *history
 
 int f(int *lookupTable, int neigb[9])
 {
-    int weirdvals = 0;
     for (size_t i = 0; i < 9; i++)
     {
         if (neigb[i] != 0 && neigb[i] != 1)
         {
-            weirdvals = 1;
+            printf("weird values:");
+            printArray(neigb, 9);
+            return 0;
         }
     }
-
-    if (weirdvals)
+    int index = 0;
+    int pow2 = 1;
+    for (int i = 8; i >= 0; i--)
     {
-        printf("weird values:");
-        printArray(neigb, 9);
-        return 0;
+        int n = neigb[i];
+        index += n * pow2;
+        pow2 *= 2;
     }
-    else
-    {
-        int index = 0;
-        int pow2 = 1;
-        for (int i = 8; i >= 0; i--)
-        {
-            int n = neigb[i];
-            index += n * pow2;
-            pow2 *= 2;
-        }
-
-        // printf("%3d, %d <-", index, lookupTable[index]);
-        // printArray(neigb, 9);
-        // printf("%d\n", index);
-        return lookupTable[index];
-    }
+    return lookupTable[index];
 }
 
 void printMatrix(int *mat, int w, int h)
@@ -467,7 +450,7 @@ void generateConfig(short *cnfg, int sz)
     {
         for (size_t j = 0; j < sz; j++)
         {
-            *(cnfg + sz * i + j) = (short) mod(rand(), 2);
+            *(cnfg + sz * i + j) = (short)mod(rand(), 2);
         }
     }
 }
