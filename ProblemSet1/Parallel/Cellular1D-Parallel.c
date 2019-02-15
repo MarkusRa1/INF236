@@ -30,8 +30,8 @@ int main(int argc, char **argv)
     int *sendcount = malloc(comm_sz * sizeof(int));
     int cellsSize;
     char *rulename = "mod2.txt";
-    char *initname = "k11.txt";
-    int numOfIt = 100000;
+    char *initname = "k10.txt";
+    int numOfIt = 10000;
     if (argc == 4)
     {
         rulename = argv[1];
