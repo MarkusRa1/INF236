@@ -343,7 +343,9 @@ void runIterations(int numOfIt, int *lookupTable, int lookupSize, short *history
 
 int f(int *lookupTable, int neigb[9])
 {
-    for (size_t i = 0; i < 9; i++)
+    int index = 0;
+    int pow2 = 1;
+    for (int i = 8; i >= 0; i--)
     {
         if (neigb[i] != 0 && neigb[i] != 1)
         {
@@ -351,11 +353,6 @@ int f(int *lookupTable, int neigb[9])
             printArray(neigb, 9);
             return 0;
         }
-    }
-    int index = 0;
-    int pow2 = 1;
-    for (int i = 8; i >= 0; i--)
-    {
         int n = neigb[i];
         index += n * pow2;
         pow2 *= 2;
