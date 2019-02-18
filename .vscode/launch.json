@@ -8,7 +8,7 @@
             "name": "problem 1",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}\\ProblemSet1\\Sequential\\a.exe",
+            "program": "${workspaceFolder}\\ProblemSet1\\Branching\\a.exe",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}\\ProblemSet1\\Sequential",

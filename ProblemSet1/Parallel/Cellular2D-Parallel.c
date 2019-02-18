@@ -12,7 +12,7 @@ char **str_split(char *a_str, const char a_delim);
 void printArray(int *arr, int size);
 void runIterations(int numOfIt, int *lookupTable, const int lookupSize, short *history, int w, int h, int my_rank, int comm_sz);
 int f(int *lookupTable, int neigb[9]);
-void writeToFile(char *fileName, int *history, int w, int h);
+void writeToFile(char *fileName, short *history, int w, int h);
 int mod(int x, int m);
 void printMatrix(int *mat, int w, int h);
 void generateConfig(short *cnfg, int sz);
@@ -31,7 +31,7 @@ int main(int argc, char **argv)
     int w, h;
     int *sendcount = malloc(comm_sz * sizeof(int));
     char *rulename = "gameOfLife.txt";
-    char *initname = "config2D_5.txt";
+    char *initname = "initConfigSeq1024.txt";
     int numOfIt = 10000;
     int sz = 10;
     if (argc == 4)
@@ -85,7 +85,7 @@ int main(int argc, char **argv)
 
     double start, end1, end2;
     start = MPI_Wtime();
-
+    
     MPI_Scatterv(cells, sendcount, displays, MPI_SHORT, history, myCellsSize, MPI_SHORT, 0, MPI_COMM_WORLD);
     if (my_rank == 0)
     {
@@ -112,8 +112,9 @@ int main(int argc, char **argv)
     {
         double t1 = (end1 - start);
         double t2 = (end2 - start);
-        printf("%lu bits/bytes\n", sizeof(short));
+        // printf("%lu bits/bytes\n", sizeof(short));
         printf("size: %d\niterations: %d\ntime taken: %fs, %fs\nSpeed: %fMBps\n", sz, numOfIt, t1, t2, ((double)sz * sz * numOfIt) / t2 * sizeof(short) / 1000000);
+        // printf("%f", t2);
         // printMatrix(historyall, w, h);
         // writeToFile("de", historyall, w, h);
         free(historyall);
@@ -425,7 +426,7 @@ char **str_split(char *a_str, const char a_delim)
     return result;
 }
 
-void writeToFile(char *fileName, int *history, int w, int h)
+void writeToFile(char *fileName, short *history, int w, int h)
 {
     FILE *fp;
     fp = fopen("../Plot/data.csv", "w+");

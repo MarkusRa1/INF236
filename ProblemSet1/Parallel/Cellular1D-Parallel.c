@@ -78,8 +78,8 @@ int main(int argc, char **argv)
     int myCellsSize = sendcount[my_rank];
     int *recvarr = malloc(myCellsSize * sizeof(int));
 
-    clock_t start, end1, end2;
-    start = clock();
+    double start, end1, end2;
+    start = MPI_Wtime();
     MPI_Scatterv(cells, sendcount, displays, MPI_INT, &recvarr[0], myCellsSize, MPI_INT, 0, MPI_COMM_WORLD);
 
     int *history = (int *)malloc(myCellsSize * (numOfIt + 1) * sizeof(int));
@@ -97,18 +97,18 @@ int main(int argc, char **argv)
         rbuf = (int *)malloc(cellsSize * sizeof(int));
         historyall = (int *)malloc(cellsSize * (numOfIt + 1) * sizeof(int));
     }
-    end1 = clock();
+    end1 = MPI_Wtime();
     for (size_t i = 0; i < numOfIt + 1; i++)
     {
         MPI_Gatherv(history + i * myCellsSize, sendcount[my_rank], MPI_INT, historyall + i * cellsSize, sendcount, displays, MPI_INT, 0, MPI_COMM_WORLD);
     }
-    end2 = clock();
+    end2 = MPI_Wtime();
     MPI_Finalize(); // No MPI function after this call
     if (my_rank == 0)
     {
-        double t1 = ((double) (end1-start))/CLOCKS_PER_SEC;
-        double t2 = ((double) (end2-start))/CLOCKS_PER_SEC;
-        printf("%fs, %fs\n", t1, t2);
+        double t1 = end1-start;
+        double t2 = end2-start;
+        printf("%f", t2);
         // writeToFile("de", historyall, cellsSize, numOfIt + 1);
     }
     return 0;

@@ -14,12 +14,13 @@ void runIterations(int i, int *lookupTable, const int lookupSize, int *cells, co
 void writeToFile(char *fileName, int *history, int h, int w);
 void printMatrix(int *mat, int w, int h);
 int mod(int x, int m);
+void generateConfig(int *cnfg, int sz);
 
 int main(int argc, char *argv[])
 {
     char *rulename = "gameOfLife.txt";
     char *initname = "config2D_5.txt";
-    int numOfIt = 1;
+    int numOfIt = 10000;
     if (argc == 4)
     {
         rulename = argv[1];
@@ -32,7 +33,13 @@ int main(int argc, char *argv[])
     int w, h;
 
     makeLookupTable(lookuptable, rulename);
-    getCellInfo(&cells, initname, &w, &h);
+    // getCellInfo(&cells, initname, &w, &h);
+    cells = malloc(1024 * 1024 * sizeof(int));
+    generateConfig(cells, 1024);
+    w = 1024;
+    h = 1024;
+    writeToFile("initConfigSeq1024.txt", cells, w, h);
+    printf("done");
     runIterations(numOfIt, lookuptable, sizeof(lookuptable) / sizeof(lookuptable[0]), cells, w, h);
     // free(cells);
     return 0;
@@ -295,14 +302,24 @@ void runIterations(int numOfIt, int *lookupTable, const int lookupSize, int *cel
 void writeToFile(char *fileName, int *history, int w, int h)
 {
     FILE *fp;
-    fp = fopen("../Plot/data.csv", "w+");
+    char *p = "../Plot/";
+    char *path = calloc(strlen(p) + strlen(fileName) + 1, sizeof(char));
+    if (path == NULL) {
+        perror("Path failed alloc\n");
+        exit(EXIT_FAILURE);
+    }
+
+    strcat(path, p);
+    strcat(path, fileName);
+
+    fp = fopen(path, "w+");
 
     for (size_t i = 0; i < h; i++)
     {
         for (size_t j = 0; j + 1 < w; j++)
         {
             // printf("%d,", *(history + i*h + j));
-            fprintf(fp, "%d,", *(history + i * w + j));
+            fprintf(fp, "%d", *(history + i * w + j));
         }
         // printf("%d\n", *(history + i*h + w-1));
         fprintf(fp, "%d\n", *(history + i * w + w - 1));
@@ -321,4 +338,15 @@ void printMatrix(int *mat, int w, int h)
 int mod(int x, int m)
 {
     return (x % m + m) % m;
+}
+
+void generateConfig(int *cnfg, int sz)
+{
+    for (size_t i = 0; i < sz; i++)
+    {
+        for (size_t j = 0; j < sz; j++)
+        {
+            *(cnfg + sz * i + j) = mod(rand(), 2);
+        }
+    }
 }

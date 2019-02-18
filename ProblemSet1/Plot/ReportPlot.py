@@ -24,23 +24,23 @@ def autolabel(rects):
     for rect in rects:
         height = rect.get_height()
         plt.text(rect.get_x() + rect.get_width()/2., 0,
-                '%d' % int(height),
+                '%ds' % int(height),
                 ha='center', va='bottom')
 
-for commsz in [1, 2, 4, 8, 16, 32, 64, 128, 256, 512]:
+for n in [1024, 2048, 4096]:
     x = list()
     y = list()
     for sblst in data:
-        if sblst[0] == commsz:
+        if sblst[1] == n:
             print(sblst)
-            x.append(int(sblst[1]))
+            x.append(int(sblst[0]))
             y.append(int(sblst[3]))
-    plt.figure(commsz)
+    plt.figure(n)
     index = np.arange(len(x))
     rect = plt.bar(index, y, width=0.8)
     autolabel(rect)
     plt.xlabel('Size of n')
     plt.ylabel('Time in seconds')
     plt.xticks(index, x, rotation=30)
-    plt.title('Time taken for p=' + str(commsz) + ' processes')
+    plt.title('Time taken for p=' + str(n) + ' processes')
     plt.show()
