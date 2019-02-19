@@ -108,7 +108,7 @@ int main(int argc, char **argv)
     {
         double t1 = end1-start;
         double t2 = end2-start;
-        printf("%f", t2);
+        printf("%d,%s,%d,%f,%f\n", comm_sz, initname, numOfIt, t1, t2);
         // writeToFile("de", historyall, cellsSize, numOfIt + 1);
     }
     return 0;
