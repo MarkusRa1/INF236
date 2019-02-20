@@ -265,10 +265,9 @@ void runIterations(int numOfIt, int *lookupTable, int lookupSize, short *history
         {
             if (even)
             {
-                // printf("%d send to %d\n", my_rank, downneig);
                 MPI_Send(history + currit * w * h + w * (h - 1), w, MPI_SHORT, downneig, 1, MPI_COMM_WORLD);
                 MPI_Recv(updownarr + w, w, MPI_SHORT, downneig, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                // printf("%d send to %d\n", my_rank, upneig);
+
                 if (my_rank == 0 && oddcmsz)
                 {
                     MPI_Recv(updownarr, w, MPI_SHORT, upneig, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
@@ -279,27 +278,18 @@ void runIterations(int numOfIt, int *lookupTable, int lookupSize, short *history
                     MPI_Send(history + currit * w * h, w, MPI_SHORT, upneig, 1, MPI_COMM_WORLD);
                     MPI_Recv(updownarr, w, MPI_SHORT, upneig, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                 }
-
-                // printf("%d: ", my_rank);
-                // printArray(updownarr, w*2);
             }
             else
             {
-                // printf("%d recv from %d\n", my_rank, upneig);
                 MPI_Recv(updownarr, w, MPI_SHORT, upneig, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                 MPI_Send(history + currit * w * h, w, MPI_SHORT, upneig, 1, MPI_COMM_WORLD);
-                // printf("%d recv from %d\n", my_rank, downneig);
+
                 MPI_Recv(updownarr + w, w, MPI_SHORT, downneig, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                 MPI_Send(history + currit * w * h + w * (h - 1), w, MPI_SHORT, downneig, 1, MPI_COMM_WORLD);
-                // printf("%d: ", my_rank);
-                // printArray(updownarr, w*2);
             }
-            // printf("P%d done %d, got %d and %d\n", my_rank, i, leftVal, rightVal);
         }
         else
         {
-            // leftVal = *(history + i * cellsSize + cellsSize - 1);
-            // rightVal = *(history + i * cellsSize);
             for (size_t jw = 0; jw < w; jw++)
             {
                 *(updownarr + jw) = *(history + currit * w * h + (h - 1) * w + jw);
@@ -338,7 +328,6 @@ void runIterations(int numOfIt, int *lookupTable, int lookupSize, short *history
             }
         }
     }
-    // printMatrix(history + mod(numOfIt, 2) * w * h, w, h);
     free(updownarr);
 }
 

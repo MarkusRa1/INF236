@@ -12,6 +12,6 @@ g = data
 
 plt.plot(1)
 plt.imshow(g, cmap='Greys',  interpolation='nearest')
-plt.savefig('blkwht.svg')
+plt.savefig('blkwht.png')
 
 plt.show()
