@@ -55,14 +55,14 @@ int main(int argc, char *argv[])
     int *final;
     int fsz;
     int ssz;
-    int bsz = 10;
+    int bsz = strlen(a);
     int *binarr = malloc(bsz * sizeof(int));
 
-    generateRules(10, &operation, &osz, &ilookup, &isz, &ssz, &final, &fsz);
-    generateAssignment(binarr, bsz);
-    // parseRuleFile(rulename, &operation, &osz, &ilookup, &isz, &ssz, &final, &fsz);
+    // generateRules(10, &operation, &osz, &ilookup, &isz, &ssz, &final, &fsz);
+    // generateAssignment(binarr, bsz);
 
-    // stringToBinArr(a, binarr, bsz);
+    parseRuleFile(rulename, &operation, &osz, &ilookup, &isz, &ssz, &final, &fsz);
+    stringToBinArr(a, binarr, bsz);
 
     printf("Binary arr: ");
     printArray(binarr, bsz);
