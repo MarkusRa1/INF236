@@ -57,7 +57,7 @@ int main(int argc, char **argv)
         a = argv[2];
         // bsz = atoi(argv[2]);
     }
-    bsz = sizeof(a);
+    bsz = strlen(a);
     int *operation;
     int osz;
     int *ilookup;
@@ -236,7 +236,7 @@ void stringToBinArr(char *binstr, int *arr, int n)
         }
         else
         {
-            perror("Weird value in a");
+            printf("Weird value in a\n");
         }
     }
 }
